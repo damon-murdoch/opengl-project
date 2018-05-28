@@ -74,10 +74,37 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="phong.fragment" />
+    <None Include="plane.h" />
     <None Include="ReadMe.txt" />
+    <None Include="phong.vertex" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3802_Game.cpp" />
+    <ClCompile Include="bsptree.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="guicon.cpp" />
+    <ClCompile Include="lighting.cpp" />
+    <ClCompile Include="models.cpp" />
+    <ClCompile Include="image.cpp" />
+    <ClCompile Include="math_3d.cpp" />
+    <ClCompile Include="plane.cpp" />
+    <ClCompile Include="robotprac.cpp" />
+    <ClCompile Include="shader.cpp" />
+    <ClCompile Include="skybox.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bsptree.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="common.h" />
+    <ClInclude Include="guicon.h" />
+    <ClInclude Include="image.h" />
+    <ClInclude Include="lighting.h" />
+    <ClInclude Include="math_3d.h" />
+    <ClInclude Include="models.h" />
+    <ClInclude Include="robotprac.h" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="skybox.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

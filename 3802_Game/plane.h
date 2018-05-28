@@ -1,0 +1,4 @@
+#ifndef _INCLUDE_PLANE
+#define _INCLUDE_PLANE
+
+#endif // _INCLUDE_PLANE
