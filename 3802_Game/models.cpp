@@ -1,5 +1,7 @@
 #include "models.h"
 
+#include "tinyobjloader.h"
+
 void GameObject::Generate_Bounding_Box(){
 
 }
@@ -13,5 +15,5 @@ GameObject::GameObject(){
 }
 
 GameObject::GameObject(char*filename){
-	//GameObject.model.LoadFile(filename);
+
 }

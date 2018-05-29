@@ -2,7 +2,6 @@
 #define _INCLUDE_MODELS
 
 #include "common.h"
-//#include "OBJ_Loader.h"
 
 class GameObject{
 public:
@@ -12,7 +11,6 @@ public:
 	float weight;
 
 	tBoundingBox bounding_box;
-	//objl::Loader model;
 
 	GameObject::GameObject();
 	GameObject::GameObject(char*filename);

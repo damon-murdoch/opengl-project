@@ -11,12 +11,14 @@
 #include "skybox.h"
 #include "shader.h"
 #include "guicon.h"
+#include "terrain.h"
 
 // Preprocessor Definitions
 
 #define CAMERASPEED 0.03f
-#define FRAMEWIDE 640
-#define FRAMEHIGH 480
+#define FRAMEWIDE 1248
+#define FRAMEHIGH 1024
+#define DRAW_DISTANCE 1500
 
 #ifndef MAX_OBJECTS
 	#define MAX_OBJECTS 512
@@ -58,14 +60,18 @@ int eyes;
 
 Shader phong;
 
+Terrain terrain;
+
 Light pointlight;
 
-Skybox skybox(0,0,0,500,500,500);
+Skybox skybox(0,0,0,1000,1000,1000);
 
 Image skb_f,skb_b,skb_l,skb_r,skb_u,skb_d;
 
 // from http://www.morrowland.com/apron/tutorials/gl/gl_window.php
 GLint GL_Init(GLvoid){
+
+	glEnable(GL_TEXTURE_2D);
 
 	glShadeModel(GL_SMOOTH);
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
@@ -75,12 +81,12 @@ GLint GL_Init(GLvoid){
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
 
-	skb_f.load_image("img/skybox/darkcity_ft.tga");
-	skb_b.load_image("img/skybox/darkcity_bk.tga");
-	skb_l.load_image("img/skybox/darkcity_lf.tga");
-	skb_r.load_image("img/skybox/darkcity_rt.tga");
-	skb_u.load_image("img/skybox/darkcity_up.tga");
-	skb_d.load_image("img/skybox/darkcity_dn.tga");
+	skb_f.load_image("img/envmap_violentdays/violentdays_ft.tga");
+	skb_b.load_image("img/envmap_violentdays/violentdays_bk.tga");
+	skb_l.load_image("img/envmap_violentdays/violentdays_lf.tga");
+	skb_r.load_image("img/envmap_violentdays/violentdays_rt.tga");
+	skb_u.load_image("img/envmap_violentdays/violentdays_up.tga");
+	skb_d.load_image("img/envmap_violentdays/violentdays_dn.tga");
 
 	skybox.Assign_Front(skb_f);
 	skybox.Assign_Back(skb_b);
@@ -102,10 +108,10 @@ void Initialise_Shading(){
 	
 	glEnable(GL_LIGHTING);
 
-	GLfloat ambient_light[] = {0.2f,0.2f,0.2f,1.0f};
+	GLfloat ambient_light[] = {5.0f,5.0f,5.0f,5.0f};
 	GLfloat diffuse_light[] = {0.8f,0.8f,0.8f,1.0f};
 	GLfloat specular_light[] = {0.5f,0.5f,0.5f,1.0f};
-	GLfloat position[] = {-1.5f,1.0f,-4.0f,1.0f};
+	GLfloat position[] = {0.0f,0.0f,0.0f,0.0f};
 
 	pointlight.Initialise(ambient_light,diffuse_light,specular_light,position);
 	pointlight.Bind(GL_LIGHT0);
@@ -188,8 +194,8 @@ void Update_Projection(GLboolean toggle){
 
 	glLoadIdentity();
 
-	if(s_use_perspective)	glFrustum(-1.0,1.0,-1.0,1.0,5,1000);
-	else					glOrtho(-1.0,1.0,-1.0,1.0,5,1000);
+	if(s_use_perspective)	glFrustum(-1.0,1.0,-1.0,1.0,5,DRAW_DISTANCE);
+	else					glOrtho(-1.0,1.0,-1.0,1.0,5,DRAW_DISTANCE);
 
 	glMatrixMode(GL_MODELVIEW);
 
@@ -207,7 +213,7 @@ GLvoid GL_Resize_Scene(GLsizei width, GLsizei height){
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,1000.0f);
+	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,DRAW_DISTANCE);
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -228,6 +234,7 @@ GLint GL_Draw_Scene(GLvoid){
 			  camera.m_up.x,camera.m_up.y,camera.m_up.z);
 
 	skybox.Render();
+	terrain.Render();
 
 	Draw_Grid();
 

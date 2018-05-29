@@ -1,5 +1,6 @@
 varying vec3 N;
-varying vec3 v;    
+varying vec3 v;   
+ 
 void main (void)  
 {  
    vec3 L = normalize(gl_LightSource[0].position.xyz - v);   

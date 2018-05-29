@@ -1,6 +1,8 @@
 #ifndef _IMAGE_CLASS
 #define _IMAGE_CLASS
 
+#define BITMAP_ID 04xD42
+
 class Image{
 public:
 	int x,y,n;
