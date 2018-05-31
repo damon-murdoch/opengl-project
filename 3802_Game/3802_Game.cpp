@@ -12,10 +12,11 @@
 #include "shader.h"
 #include "guicon.h"
 #include "terrain.h"
+#include "physics.h"
 
 // Preprocessor Definitions
 
-#define CAMERASPEED 0.03f
+#define CAMERASPEED 0.01f
 #define FRAMEWIDE 1248
 #define FRAMEHIGH 1024
 #define DRAW_DISTANCE 1500
@@ -64,6 +65,8 @@ Terrain terrain;
 
 Light pointlight;
 
+Model honk;
+
 Skybox skybox(0,0,0,1000,1000,1000);
 
 Image skb_f,skb_b,skb_l,skb_r,skb_u,skb_d;
@@ -72,8 +75,11 @@ Image skb_f,skb_b,skb_l,skb_r,skb_u,skb_d;
 GLint GL_Init(GLvoid){
 
 	glEnable(GL_TEXTURE_2D);
-
 	glShadeModel(GL_SMOOTH);
+	glCullFace(GL_BACK);
+
+	
+
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -81,12 +87,12 @@ GLint GL_Init(GLvoid){
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
 
-	skb_f.load_image("img/envmap_violentdays/violentdays_ft.tga");
-	skb_b.load_image("img/envmap_violentdays/violentdays_bk.tga");
-	skb_l.load_image("img/envmap_violentdays/violentdays_lf.tga");
-	skb_r.load_image("img/envmap_violentdays/violentdays_rt.tga");
-	skb_u.load_image("img/envmap_violentdays/violentdays_up.tga");
-	skb_d.load_image("img/envmap_violentdays/violentdays_dn.tga");
+	skb_f.load_image("img/sor_lake1/lake1_ft.JPG");
+	skb_b.load_image("img/sor_lake1/lake1_bk.JPG");
+	skb_l.load_image("img/sor_lake1/lake1_lf.JPG");
+	skb_r.load_image("img/sor_lake1/lake1_rt.JPG");
+	skb_u.load_image("img/sor_lake1/lake1_up.JPG");
+	skb_d.load_image("img/sor_lake1/lake1_dn.JPG");
 
 	skybox.Assign_Front(skb_f);
 	skybox.Assign_Back(skb_b);
@@ -97,7 +103,11 @@ GLint GL_Init(GLvoid){
 
 	Initialise_Shading();
 
-	phong.load("phong.vertex","fragment.vertex");
+	honk.Load("obj/honk/honk.obj");
+
+	phong.load("phong.vertex","phong.fragment");
+
+	terrain.Initialise_Terrain(2,"img/heightmap/heightmap.png");
 
 	return TRUE;
 }
@@ -211,6 +221,7 @@ GLvoid GL_Resize_Scene(GLsizei width, GLsizei height){
 	glViewport(0,0,width,height);
 
 	glMatrixMode(GL_PROJECTION);
+
 	glLoadIdentity();
 	
 	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,DRAW_DISTANCE);
@@ -224,6 +235,9 @@ GLint GL_Draw_Scene(GLvoid){
 	
 	phong.use();
 
+	assert(glGetError()==GL_NO_ERROR);
+
+	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -234,9 +248,12 @@ GLint GL_Draw_Scene(GLvoid){
 			  camera.m_up.x,camera.m_up.y,camera.m_up.z);
 
 	skybox.Render();
+
 	terrain.Render();
 
 	Draw_Grid();
+
+	honk.Render();
 
 	glColor3f(255,0,0);
 
@@ -423,7 +440,7 @@ BOOL GL_Create_Window(char*title,int width,int height,int bits, bool fullscreenf
 
 	if(glewInit() != GLEW_OK){
 		GL_Kill_Window();
-		MessageBox(NULL,L"Initialization Failed.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(NULL,L"Glew Initialization Failed.",L"ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;
 	}
 

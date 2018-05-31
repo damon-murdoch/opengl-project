@@ -14,6 +14,13 @@ Image::Image(char * filename){
 	load_image(filename);
 }
 
+pixeldata Image::Get_Value_At_Pixel(int x, int y){
+	unsigned byte_per_pixel = Image::n;
+	unsigned char * pixel_offset = Image::data + (x + Image::x * y) * byte_per_pixel;
+	pixeldata ret = {pixel_offset[0],pixel_offset[1],pixel_offset[2],(byte_per_pixel <=4 ? pixel_offset[3] : 0xff)};
+	return ret;
+}
+
 bool Image::load_image(char * filename){
 	
 	Image::data = stbi_load(filename,&x,&y,&n,0);

@@ -1,60 +1,182 @@
 #include "terrain.h"
 
-Terrain::Terrain(){
+Terrain::Terrain(){}
+
+Terrain::Terrain(int height, char * filename){
+	Initialise_Terrain(height,filename);
+}
+
+void Terrain::Initialise_Terrain(int height, char * filename){
+	
+	image.load_image(filename);
+
+	w = image.x;
+	l = image.y;
+
+	hs = new float*[l];
+	for(int i=0;i<l;i++){
+		hs[i] = new float[w];
+	}
+
+	normals = new tVector3*[l];
+	for(int i=0;i<l;i++){
+		normals[i]=new tVector3[w];
+	}
+	computed_normals = false;
+
+    for(int y = 0; y < image.y; y++) {
+        for(int x = 0; x < image.x; x++) {
+            unsigned char color =
+                (unsigned char)image.data[y * image.x + x];
+            float h = height * ((color / 255.0f) - 0.5f);
+            Terrain::Set_Height(x, y, h);
+        }
+    }
+
+    Terrain::Compute_Normals();
+
+	image.Free();
+}
+
+Terrain::~Terrain(){
+	for(int i = 0; i < l; i++) {
+		delete[] hs[i];
+	}
+	delete[] hs;
+            
+	for(int i = 0; i < l; i++) {
+		delete[] normals[i];
+	}
+	delete[] normals;
+}
+
+void Terrain::Compute_Normals(){
+	if(computed_normals) return;
+
+	tVector3 ** normals2 = new tVector3*[l];
+	for(int i=0;i<l;i++){
+		normals2[i] = new tVector3[w];
+	}
+
+	for(int z=0;z<l;z++){
+		for(int x=0; x<l; x++){
+			
+			tVector3 sum(0.0f,0.0f,0.0f);
+			
+			tVector3 out;
+			if(z>0){
+				out = tVector3(0.0f,hs[z-1][x]-hs[z][x],-1.0f);
+			}
+
+			tVector3 in;
+			if(z<l-1){
+				in = tVector3(0.0f,hs[z+1][x]-hs[z][x],1.0f);
+			}
+
+			tVector3 left;
+
+			if(x > 0){
+				left = tVector3(-1.0f, hs[z][x - 1] - hs[z][x], 0.0f);
+			}
+
+			tVector3 right;
+
+			if (x < w - 1) {
+				right = tVector3(1.0f, hs[z][x + 1] - hs[z][x], 0.0f);
+			}
+
+			if (x > 0 && z > 0) { 
+				sum = sum + normalize(cross(out,left));
+			}
+            if (x > 0 && z < l - 1) {
+				sum = sum + normalize(cross(left,in));
+			}
+			if (x < w - 1 && z < l - 1) {
+				sum = sum + normalize(cross(in,right));
+			}
+			if (x < w - 1 && z > 0) {
+				sum = sum + normalize(cross(right,out));
+			}
+			normals2[z][x] = sum;
+		}
+	}
+
+	const float FALLOUT_RATIO = 0.5;
+
+	for(int z=0;z<l;z++){
+		for(int x=0;x<w;x++){
+			tVector3 sum = normals2[z][x];
+			if(x>0){
+				sum = sum + normals2[z][x - 1] * FALLOUT_RATIO;
+			}
+			if(x<w-1){
+				sum = sum + normals2[z][x + 1] * FALLOUT_RATIO;
+			}
+			if(z>0){
+				sum = sum + normals2[z-1][x] * FALLOUT_RATIO;
+			}
+			if(z<0){
+				sum = sum + normals2[z+1][x];
+			}
+
+			if(magnitude(sum) == 0){
+				sum = tVector3(0.0f,1.0f,0.0f);
+			}
+			normals[z][x]=sum;
+		}
+	}
+	computed_normals=true;
 
 }
 
-Terrain::Terrain(float x, float y, float z, float width, float height, float length){
-	Terrain::Init(x,y,z,width,height,length);
+tVector3 Terrain::Get_Normal(int x, int z){
+	if(!computed_normals){
+		Compute_Normals();
+	}
+	return normals[z][x];
 }
 
-Terrain::Terrain(float x, float y, float z, float width, float height, float length,char * heightmap_file,char * texture_file){
-	Terrain::Init(x,y,z,width,height,length);
-	Terrain::Load_Image(heightmap_file,texture_file);
+int Terrain::Get_Width(){
+	return w;
+}
+
+int Terrain::Get_Length(){
+	 return l;
+}
+
+void Terrain::Set_Height(int x, int z, int y){
+	hs[z][x] = y;
+	computed_normals = false;
+}
+
+float Terrain::Get_Height(int x, int z){
+	return hs[z][x];
 }
 
 void Terrain::Render(){
 	
-	//glBindTexture(GL_TEXTURE_2D,Terrain::Texture);
+	glPushMatrix();
 
-	for (int i=Heightmap_Img.x;i<Heightmap_Img.x*Heightmap_Img.y;i++){
-		glBegin(GL_QUADS);
-		{
-			glTexCoord2f(0.0f,0.0f); glVertex3f(Indexes[i].x,Indexes[i].y,Indexes[i].z);
-			glTexCoord2f(0.0f,1.0f); glVertex3f(Indexes[i+1].x,Indexes[i+1].y,Indexes[i+1].z);
-			glTexCoord2f(1.0f,0.1f); glVertex3f(Indexes[i-Heightmap_Img.x].x,Indexes[i-Heightmap_Img.x].y,Indexes[i-Heightmap_Img.x].z);
-			glTexCoord2f(1.0f,1.0f); glVertex3f(Indexes[i-Heightmap_Img.x+1].x,Indexes[i-Heightmap_Img.x+1].y,Indexes[i-Heightmap_Img.x+1].z);
+	//float scale = 5.0f / MAX(Terrain::Get_Width() - 1, Terrain::Get_Length()-1);
+	//glScalef(scale,scale,scale);
+	//glTranslatef(-float(Terrain::Get_Width())/2,0.0f,-float(Terrain::Get_Width())/2);
+	
+	glColor3f(0.3f,0.9f,0.0f);
+	for(int z=0;z<Terrain::Get_Length()-1;z++){
+		glBegin(GL_TRIANGLE_STRIP);
+		for(int x=0;x<Terrain::Get_Width();x++){
+			
+			tVector3 normal = Terrain::Get_Normal(x,z);
+			glNormal3f(normal.x,normal.y,normal.z);
+			glVertex3f(x,Terrain::Get_Height(x,z),z);
+			
+			normal = Terrain::Get_Normal(x,z+1);
+			glNormal3f(normal.x,normal.y,normal.z);
+			glVertex3f(x,Terrain::Get_Height(x,z+1),z+1);
 		}
 		glEnd();
 	}
-}
 
-void Terrain::Init(float x, float y, float z, float width, float height, float length){
-	Terrain::x = x + width / 2;
-	Terrain::y = y + height / 2;
-	Terrain::z = z + length / 2;
-	Terrain::width = width;
-	Terrain::height = height;
-	Terrain::length = length;
-}
+	glPopMatrix();
 
-// terrain.load_image("img/terrain_map.png","img/terrain_tex.jpg");
-
-void Terrain::Load_Image(char*heightmap_file,char*texture_file){
-	Terrain::Heightmap_Img.load_image(heightmap_file);
-	Terrain::Texture_Img.load_image(texture_file);
-
-	Indexes = (tVector3*)malloc(Heightmap_Img.x*Heightmap_Img.y*sizeof(tVector3));
-
-	for(int i=0;i<Heightmap_Img.x;i++){
-		for(int j=0;j<Heightmap_Img.y;i++){
-			Indexes[j+Heightmap_Img.x*i].x = i*(width/Heightmap_Img.x);
-			Indexes[j+Heightmap_Img.x*i].y = (i+j);
-			Indexes[j+Heightmap_Img.x*i].z = j*(length/Heightmap_Img.y);
-		}
-	}
-}
-
-void Terrain::Free(){
-	free(Indexes);
 }

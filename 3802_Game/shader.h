@@ -14,9 +14,10 @@ public:
 	
 	Shader::Shader();
 
-	Shader::Shader(const GLchar* vertex_path,const GLchar*fragment_path);
+	Shader::Shader(const GLchar * vertex_path, const GLchar * fragment_path);
 	
 	VOID Shader::use();
+
 	void Shader::load(const char*vertex_path,const char*fragment_path);
 
 	void Shader::set_bool(const std::string &name, bool value) const;
